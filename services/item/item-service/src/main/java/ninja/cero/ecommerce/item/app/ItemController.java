@@ -14,7 +14,7 @@ public class ItemController {
 	@Autowired
 	ItemRepository itemRepository;
 
-	@GetMapping("")
+	@GetMapping
 	public Iterable<Item> findAll() {
 		return itemRepository.findAll();
 	}

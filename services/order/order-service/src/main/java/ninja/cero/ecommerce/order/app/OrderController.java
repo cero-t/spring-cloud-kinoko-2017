@@ -7,16 +7,16 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.order.domain.EventType;
-import ninja.cero.ecommerce.order.domain.OrderInfo;
 import ninja.cero.ecommerce.order.domain.OrderEvent;
+import ninja.cero.ecommerce.order.domain.OrderInfo;
 import ninja.cero.ecommerce.payment.domain.Payment;
 import ninja.cero.ecommerce.stock.domain.Stock;
 
@@ -44,7 +44,7 @@ public class OrderController {
 		System.out.println(orderSource);
 	}
 
-	@RequestMapping(value = "", method = RequestMethod.POST)
+	@PostMapping
 	public void createOrder(@RequestBody OrderInfo order) {
 		orderRepository.save(order);
 
@@ -83,12 +83,12 @@ public class OrderController {
 
 	}
 
-	@RequestMapping(value = "/{orderId}/event", method = RequestMethod.POST)
+	@PostMapping("/{orderId}/event")
 	public void createEvent(@RequestBody OrderEvent orderEvent) {
 		orderEventRepository.save(orderEvent);
 	}
 
-	@RequestMapping(value = "/events", method = RequestMethod.GET)
+	@GetMapping("/events")
 	public Iterable<OrderEvent> getEvents() {
 		return orderEventRepository.findAll();
 

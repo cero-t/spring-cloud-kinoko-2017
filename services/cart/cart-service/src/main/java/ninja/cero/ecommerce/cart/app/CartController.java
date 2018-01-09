@@ -9,10 +9,11 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,17 +33,17 @@ public class CartController {
 	@Autowired
 	RestTemplate restTemplate;
 
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@GetMapping
 	public Iterable<Cart> findAll() {
 		return cartRepository.findAll();
 	}
 
-	@RequestMapping(value = "/{cartId}", method = RequestMethod.GET)
+	@GetMapping("/{cartId}")
 	public Optional<Cart> findCartById(@PathVariable String cartId) {
 		return cartRepository.findById(cartId);
 	}
 
-	@RequestMapping(value = "/{cartId}/detail", method = RequestMethod.GET)
+	@GetMapping("/{cartId}/detail")
 	public CartDetail findCartDetailById(@PathVariable String cartId) {
 		// Create cart
 		Cart cart = cartRepository.findById(cartId).orElseThrow(() -> new RuntimeException("Cart not found"));
@@ -83,7 +84,7 @@ public class CartController {
 		return cartDetail;
 	}
 
-	@RequestMapping(value = "/", method = RequestMethod.POST)
+	@PostMapping
 	public Cart createCart() {
 		Cart cart = new Cart();
 		cartRepository.save(cart);
@@ -91,7 +92,7 @@ public class CartController {
 		return cart;
 	}
 
-	@RequestMapping(value = "/{cartId}", method = RequestMethod.POST)
+	@PostMapping("/{cartId}")
 	public Cart addItem(@PathVariable String cartId, @RequestBody CartEvent cartEvent) {
 		Cart cart = cartRepository.findById(cartId).orElse(new Cart());
 
@@ -101,7 +102,7 @@ public class CartController {
 		return cart;
 	}
 
-	@RequestMapping(value = "/{cartId}/items/{itemId}", method = RequestMethod.DELETE)
+	@DeleteMapping("/{cartId}/items/{itemId}")
 	public Cart removeItem(@PathVariable String cartId, @PathVariable Long itemId) {
 		Cart cart = cartRepository.findById(cartId).orElse(new Cart());
 

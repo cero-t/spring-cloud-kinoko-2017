@@ -1,10 +1,12 @@
 package ninja.cero.ecommerce.store.cart;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -26,7 +28,7 @@ public class CartController {
 	@Autowired
 	UserContext userContext;
 
-	@RequestMapping(value = "", method = RequestMethod.GET)
+	@GetMapping
 	public CartDetail findCart() {
 		// Get cart
 		if (userContext.cartId == null) {
@@ -40,7 +42,7 @@ public class CartController {
 			.block();
 	}
 
-	@RequestMapping(value = "/items", method = RequestMethod.POST)
+	@PostMapping("/items")
 	public Cart addItem(@RequestBody CartEvent cartEvent) {
 		if (userContext.cartId == null) {
 			Cart cart = webClient.post()
@@ -69,7 +71,7 @@ public class CartController {
 			.block();
 	}
 
-	@RequestMapping(value = "/items/{itemId}", method = RequestMethod.DELETE)
+	@DeleteMapping("/items/{itemId}")
 	public Cart removeItem(@PathVariable String itemId) {
 		if (userContext.cartId == null) {
 			return null;
