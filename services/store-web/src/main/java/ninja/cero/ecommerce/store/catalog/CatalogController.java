@@ -7,12 +7,10 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import ninja.cero.ecommerce.item.domain.Item;
 import ninja.cero.ecommerce.stock.domain.Stock;
@@ -23,27 +21,32 @@ public class CatalogController {
 	private static final String ITEM_URL = "http://item-service";
 	private static final String STOCK_URL = "http://stock-service";
 
-	@Autowired
-	RestTemplate restTemplate;
-
+    @Autowired
+    WebClient webClient;
+	
 	@GetMapping
 	public List<CatalogItem> findCatalog(HttpSession session) {
 		// Force create session
 		session.getId();
-		
-		// Get items
-		ParameterizedTypeReference<List<Item>> itemsType = new ParameterizedTypeReference<List<Item>>() {
-		};
-		List<Item> items = restTemplate.exchange(ITEM_URL, HttpMethod.GET, null, itemsType).getBody();
+
+        List<Item> items = webClient.get()
+	        .uri(ITEM_URL)
+	        .retrieve()
+	        .bodyToFlux(Item.class)
+	        .collectList()
+	        .block();
 
 		// Get item stocks
 		String itemIds = items.stream().map(i -> i.id.toString()).collect(Collectors.joining(","));
 
-		ParameterizedTypeReference<List<Stock>> stocksType = new ParameterizedTypeReference<List<Stock>>() {
-		};
-		List<Stock> stocks = restTemplate.exchange(STOCK_URL + "/" + itemIds, HttpMethod.GET, null, stocksType)
-				.getBody();
-		Map<Long, Integer> stockMap = stocks.stream().collect(Collectors.toMap(s -> s.itemId, s -> s.quantity));
+        List<Stock> stocks = webClient.get()
+    	        .uri(STOCK_URL + "/" + itemIds)
+    	        .retrieve()
+    	        .bodyToFlux(Stock.class)
+    	        .collectList()
+    	        .block();
+
+        Map<Long, Integer> stockMap = stocks.stream().collect(Collectors.toMap(s -> s.itemId, s -> s.quantity));
 
 		// Filter items by stock
 		List<CatalogItem> catalogItems = items.stream().map(item -> {

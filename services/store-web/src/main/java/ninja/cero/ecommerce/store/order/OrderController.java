@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import ninja.cero.ecommerce.order.domain.OrderInfo;
 import ninja.cero.ecommerce.store.UserContext;
@@ -16,7 +16,7 @@ public class OrderController {
 	private static final String ORDER_URL = "http://order-service";
 
 	@Autowired
-	RestTemplate restTemplate;
+	WebClient webClient;
 
 	@Autowired
 	UserContext userContext;
@@ -31,6 +31,9 @@ public class OrderController {
 		// Save order
 		order.cartId = userContext.cartId;
 		userContext.cartId = null;
-		restTemplate.postForObject(ORDER_URL, order, Long.class);
+
+		webClient.post()
+			.uri(ORDER_URL)
+			.syncBody(order);
 	}
 }
