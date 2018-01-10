@@ -25,12 +25,12 @@ public class PaymentController {
 		// Do nothing.
 	}
 
-	@PostMapping("/payment")
-	public void payment(@RequestBody Payment payment) {
+	@PostMapping
+	public void processPayment(@RequestBody Payment payment) {
 		paymentRepository.save(payment);
 	}
 
-	@GetMapping("/payment")
+	@GetMapping
 	public Iterable<Payment> payments() {
 		return paymentRepository.findAll();
 	}

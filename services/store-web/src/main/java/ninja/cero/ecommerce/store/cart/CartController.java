@@ -1,5 +1,8 @@
 package ninja.cero.ecommerce.store.cart;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,22 +11,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import ninja.cero.ecommerce.cart.client.CartClient;
 import ninja.cero.ecommerce.cart.domain.Cart;
 import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.cart.domain.CartEvent;
+import ninja.cero.ecommerce.stock.client.StockClient;
 import ninja.cero.ecommerce.stock.domain.Stock;
 import ninja.cero.ecommerce.store.UserContext;
 
 @RestController
 @RequestMapping("/cart")
 public class CartController {
-	private static final String CART_URL = "http://cart-service";
-	private static final String STOCK_URL = "http://stock-service";
+	@Autowired
+	CartClient cartClient;
 
 	@Autowired
-	WebClient webClient;
+	StockClient stockClient;
 
 	@Autowired
 	UserContext userContext;
@@ -35,56 +39,32 @@ public class CartController {
 			return null;
 		}
 
-		return webClient.get()
-			.uri(CART_URL + "/" + userContext.cartId + "/detail")
-			.retrieve()
-			.bodyToMono(CartDetail.class)
-			.block();
+		return cartClient.findCartDetailById(userContext.cartId).get();
 	}
 
 	@PostMapping("/items")
 	public Cart addItem(@RequestBody CartEvent cartEvent) {
 		if (userContext.cartId == null) {
-			Cart cart = webClient.post()
-				.uri(CART_URL)
-				.retrieve()
-				.bodyToMono(Cart.class)
-				.block();
+			Cart cart = cartClient.createCart();
 			userContext.cartId = cart.cartId;
 		}
 
-		Stock stock = webClient.get()
-			.uri(STOCK_URL + "/" + cartEvent.itemId)
-			.retrieve()
-			.bodyToFlux(Stock.class)
-			.blockFirst();
-		
-		if (stock.quantity < cartEvent.quantity) {
+		List<Stock> stocks = stockClient.findByIds(Arrays.asList(cartEvent.itemId));
+
+		if (stocks.size() == 0 || stocks.get(0).quantity < cartEvent.quantity) {
 			throw new RuntimeException("Not enough stock!");
 		}
 
-		return webClient.post()
-			.uri(CART_URL + "/" + userContext.cartId)
-			.syncBody(cartEvent)
-			.retrieve()
-			.bodyToMono(Cart.class)
-			.block();
+		return cartClient.addItem(userContext.cartId, cartEvent);
 	}
 
 	@DeleteMapping("/items/{itemId}")
-	public Cart removeItem(@PathVariable String itemId) {
+	public Cart removeItem(@PathVariable Long itemId) {
 		if (userContext.cartId == null) {
 			return null;
 		}
 
-		webClient.delete()
-			.uri(CART_URL + "/" + userContext.cartId + "/items/" + itemId)
-			.exchange();
-
-		return webClient.get()
-			.uri(CART_URL + "/" + userContext.cartId)
-			.retrieve()
-			.bodyToMono(Cart.class)
-			.block();
+		cartClient.removeItem(userContext.cartId, itemId);
+		return cartClient.findCartById(userContext.cartId).get();
 	}
 }

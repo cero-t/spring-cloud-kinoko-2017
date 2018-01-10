@@ -12,29 +12,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import ninja.cero.ecommerce.item.client.ItemClient;
 import ninja.cero.ecommerce.item.domain.Item;
 import ninja.cero.ecommerce.stock.domain.Stock;
 
 @RestController
 @RequestMapping("/catalog")
 public class CatalogController {
-	private static final String ITEM_URL = "http://item-service";
 	private static final String STOCK_URL = "http://stock-service";
 
     @Autowired
     WebClient webClient;
-	
+
+    @Autowired
+    ItemClient itemClient;
+    
 	@GetMapping
 	public List<CatalogItem> findCatalog(HttpSession session) {
 		// Force create session
 		session.getId();
 
-        List<Item> items = webClient.get()
-	        .uri(ITEM_URL)
-	        .retrieve()
-	        .bodyToFlux(Item.class)
-	        .collectList()
-	        .block();
+        List<Item> items = itemClient.findAll();
 
 		// Get item stocks
 		String itemIds = items.stream().map(i -> i.id.toString()).collect(Collectors.joining(","));

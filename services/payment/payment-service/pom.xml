@@ -24,7 +24,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>order-domain</artifactId>
+			<artifactId>order-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 

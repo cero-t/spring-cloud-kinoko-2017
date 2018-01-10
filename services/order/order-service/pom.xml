@@ -24,17 +24,17 @@
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>cart-domain</artifactId>
+			<artifactId>cart-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>stock-domain</artifactId>
+			<artifactId>stock-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>payment-domain</artifactId>
+			<artifactId>payment-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 
@@ -72,7 +72,7 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.data</groupId>

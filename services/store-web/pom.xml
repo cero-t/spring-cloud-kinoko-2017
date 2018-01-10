@@ -19,27 +19,22 @@
 	<dependencies>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>item-domain</artifactId>
+			<artifactId>item-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>stock-domain</artifactId>
+			<artifactId>stock-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>cart-domain</artifactId>
+			<artifactId>cart-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>order-domain</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>ninja.cero.ecommerce</groupId>
-			<artifactId>payment-domain</artifactId>
+			<artifactId>order-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 

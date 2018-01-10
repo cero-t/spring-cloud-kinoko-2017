@@ -7,31 +7,27 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import ninja.cero.ecommerce.cart.domain.Cart;
 import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.cart.domain.CartEvent;
 import ninja.cero.ecommerce.cart.domain.CartItem;
+import ninja.cero.ecommerce.item.client.ItemClient;
 import ninja.cero.ecommerce.item.domain.Item;
 
 @RestController
 public class CartController {
-	private static final String ITEM_URL = "http://item-service";
-
 	@Autowired
 	CartRepository cartRepository;
 
 	@Autowired
-	RestTemplate restTemplate;
+	ItemClient itemClient;
 
 	@GetMapping
 	public Iterable<Cart> findAll() {
@@ -52,10 +48,7 @@ public class CartController {
 		cartDetail.cartId = cart.cartId;
 
 		// Find items in cart and convert to map
-		String pathKey = cart.items.keySet().stream().map(id -> id.toString()).collect(Collectors.joining(","));
-		ParameterizedTypeReference<List<Item>> type = new ParameterizedTypeReference<List<Item>>() {
-		};
-		List<Item> items = restTemplate.exchange(ITEM_URL + "/" + pathKey, HttpMethod.GET, null, type).getBody();
+		List<Item> items = itemClient.findByIds(cart.items.keySet());
 		Map<Long, Item> itemMap = items.stream().collect(Collectors.toMap(i -> i.id, i -> i));
 
 		// Resolve cart items
