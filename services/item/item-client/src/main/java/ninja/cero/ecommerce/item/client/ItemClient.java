@@ -1,6 +1,5 @@
 package ninja.cero.ecommerce.item.client;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +23,6 @@ public class ItemClient {
 
 	public List<Item> findByIds(Collection<Long> ids) {
 		String idString = ids.stream().map(id -> id.toString()).collect(Collectors.joining(","));
-		return webClient.get().uri(ITEM_URL + "/" + idString).retrieve().bodyToFlux(Item.class).collectList()
-				.block(Duration.ofSeconds(10));
+		return webClient.get().uri(ITEM_URL + "/" + idString).retrieve().bodyToFlux(Item.class).collectList().block();
 	}
 }
