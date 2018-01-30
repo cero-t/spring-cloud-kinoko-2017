@@ -2,7 +2,7 @@ package ninja.cero.ecommerce.cart.domain;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Map;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 
@@ -12,7 +12,7 @@ public class CartDetail implements Serializable {
 	@Id
 	public Long cartId;
 
-	public Map<Long, CartItem> items;
+	public List<CartItem> items;
 
 	public BigDecimal total;
 }

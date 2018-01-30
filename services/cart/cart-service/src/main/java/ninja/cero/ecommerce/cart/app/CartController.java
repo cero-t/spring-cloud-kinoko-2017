@@ -75,10 +75,10 @@ public class CartController {
 				cartItem.image = item.image;
 				cartItem.quantity = i.getValue();
 				return cartItem;
-			}).collect(Collectors.toMap(i -> i.itemId, i -> i));
+			}).collect(Collectors.toList());
 
-			// Count amount
-			cartDetail.total = cartDetail.items.values().stream()
+			// Count total
+			cartDetail.total = cartDetail.items.stream()
 					.map(i -> i.unitPrice.multiply(new BigDecimal(i.quantity))).reduce((b1, b2) -> b1.add(b2))
 					.orElse(BigDecimal.ZERO);
 

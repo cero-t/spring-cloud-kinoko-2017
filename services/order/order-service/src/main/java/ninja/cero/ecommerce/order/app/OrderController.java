@@ -56,7 +56,7 @@ public class OrderController {
 				.orElseThrow(() -> new RuntimeException("Cart not found"));
 
 		// Keep stock
-		List<Stock> keepRequests = cart.items.values().stream().map(i -> {
+		List<Stock> keepRequests = cart.items.stream().map(i -> {
 			Stock stock = new Stock();
 			stock.itemId = i.itemId;
 			stock.quantity = i.quantity;
