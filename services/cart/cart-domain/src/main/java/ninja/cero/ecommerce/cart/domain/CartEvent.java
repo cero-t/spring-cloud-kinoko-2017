@@ -7,5 +7,5 @@ public class CartEvent implements Serializable {
 
 	public Long itemId;
 
-	public int quantity;
+	public Integer quantity;
 }

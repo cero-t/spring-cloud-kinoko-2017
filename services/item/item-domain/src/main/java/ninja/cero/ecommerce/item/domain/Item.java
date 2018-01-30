@@ -14,6 +14,8 @@ public class Item implements Serializable {
 
 	public String name;
 
+	public String media;
+
 	public String author;
 
 	public BigDecimal unitPrice;

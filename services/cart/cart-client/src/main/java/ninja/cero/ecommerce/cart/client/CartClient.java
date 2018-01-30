@@ -23,7 +23,7 @@ public class CartClient {
 	}
 
 	public Optional<Cart> findCartById(String cartId) {
-		return webClient.get().uri(CART_URL, cartId).retrieve().bodyToMono(Cart.class).blockOptional();
+		return webClient.get().uri(CART_URL + "/" + cartId).retrieve().bodyToMono(Cart.class).blockOptional();
 	}
 
 	public Optional<CartDetail> findCartDetailById(String cartId) {

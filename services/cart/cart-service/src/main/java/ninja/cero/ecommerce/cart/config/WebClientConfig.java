@@ -11,7 +11,8 @@ import ninja.cero.ecommerce.item.client.ItemClient;
 public class WebClientConfig {
 	@Bean
 	WebClient webClient(LoadBalancerExchangeFilterFunction lbFunction) {
-		return WebClient.builder().filter(lbFunction).build();
+		// return WebClient.builder().filter(lbFunction).build();
+		return WebClient.builder().build();
 	}
 
 	@Bean

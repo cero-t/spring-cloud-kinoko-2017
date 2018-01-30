@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,10 +19,10 @@ import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.cart.domain.CartEvent;
 import ninja.cero.ecommerce.stock.client.StockClient;
 import ninja.cero.ecommerce.stock.domain.Stock;
-import ninja.cero.ecommerce.store.UserContext;
 
 @RestController
 @RequestMapping("/cart")
+@CrossOrigin
 public class CartController {
 	@Autowired
 	CartClient cartClient;
@@ -29,42 +30,32 @@ public class CartController {
 	@Autowired
 	StockClient stockClient;
 
-	@Autowired
-	UserContext userContext;
-
-	@GetMapping
-	public CartDetail findCart() {
-		// Get cart
-		if (userContext.cartId == null) {
-			return null;
-		}
-
-		return cartClient.findCartDetailById(userContext.cartId).get();
+	@PostMapping
+	public Cart createCart() {
+		return cartClient.createCart();
 	}
 
-	@PostMapping("/items")
-	public Cart addItem(@RequestBody CartEvent cartEvent) {
-		if (userContext.cartId == null) {
-			Cart cart = cartClient.createCart();
-			userContext.cartId = cart.cartId;
-		}
+	@GetMapping("/{cartId}")
+	public CartDetail findCart(@PathVariable String cartId) {
+		return cartClient.findCartDetailById(cartId).get();
+	}
+
+	@PostMapping("/{cartId}")
+	public CartDetail addEvent(@PathVariable String cartId, @RequestBody CartEvent cartEvent) {
+		cartClient.findCartById(cartId).orElseThrow(() -> new RuntimeException("Cart not found")); 
 
 		List<Stock> stocks = stockClient.findByIds(Arrays.asList(cartEvent.itemId));
-
 		if (stocks.size() == 0 || stocks.get(0).quantity < cartEvent.quantity) {
 			throw new RuntimeException("Not enough stock!");
 		}
 
-		return cartClient.addItem(userContext.cartId, cartEvent);
+		cartClient.addItem(cartId, cartEvent);
+		return cartClient.findCartDetailById(cartId).get();
 	}
 
-	@DeleteMapping("/items/{itemId}")
-	public Cart removeItem(@PathVariable Long itemId) {
-		if (userContext.cartId == null) {
-			return null;
-		}
-
-		cartClient.removeItem(userContext.cartId, itemId);
-		return cartClient.findCartById(userContext.cartId).get();
+	@DeleteMapping("/{cartId}/{itemId}")
+	public CartDetail removeItem(@PathVariable String cartId, @PathVariable Long itemId) {
+		cartClient.removeItem(cartId, itemId);
+		return cartClient.findCartDetailById(cartId).get();
 	}
 }

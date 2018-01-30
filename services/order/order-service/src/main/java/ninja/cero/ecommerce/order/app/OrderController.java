@@ -69,7 +69,7 @@ public class OrderController {
 		payment.name = order.cardName;
 		payment.expire = order.cardExpire;
 		payment.cardNumber = order.cardNumber;
-		payment.amount = cart.amount;
+		payment.amount = cart.total;
 		paymentClient.check(payment);
 
 		// Start orderEvent

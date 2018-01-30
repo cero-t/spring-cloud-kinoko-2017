@@ -10,7 +10,7 @@ public class Cart implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	public String cartId;
+	public Long cartId;
 
 	public Map<Long, Integer> items = new LinkedHashMap<>();
 }
