@@ -23,7 +23,7 @@ const mutations = {
     state.total = response.total
   },
   [RESET_CART] (state) {
-    state.cardId = null
+    state.cartId = null
     state.total = 0
     state.products = []
   }

@@ -45,7 +45,6 @@ export function checkout ({ state, commit }, order) {
   order.cartId = state.cartId
   Vue.http.post(`order`, order)
     .then((response) => {
-      console.log('reset')
       commit(RESET_CART)
     })
 }
