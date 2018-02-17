@@ -41,11 +41,11 @@ export function subtractFromCart ({ state, commit }, productId) {
     .then((response) => commit(REFRESH_CART, response.body))
 }
 
-export function checkout ({ state, commit }) {
-  var order = {
-    cartId: state.cartId
-  }
-
+export function checkout ({ state, commit }, order) {
+  order.cartId = state.cartId
   Vue.http.post(`order`, order)
-    .then((response) => commit(RESET_CART))
+    .then((response) => {
+      console.log('reset')
+      commit(RESET_CART)
+    })
 }

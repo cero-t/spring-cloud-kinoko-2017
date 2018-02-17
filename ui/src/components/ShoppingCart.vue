@@ -26,7 +26,7 @@
       No products :(
     </div>
     <div class="total"><span>Total</span> $ {{total}}</div>
-    <button type="button" :disabled="!products.length" @click.prevent.stop="checkout" class="btn btn-primary btn-block">Checkout</button>
+    <button type="button" :disabled="!products.length" @click.prevent="goCheckout()" class="btn btn-primary btn-block">Proceed</button>
   </section>
 </template>
 
@@ -40,12 +40,16 @@ export default {
       total: 'getTotal'
     })
   },
-  methods: mapActions([
-    'addToCart',
-    'removeFromCart',
-    'subtractFromCart',
-    'checkout'
-  ])
+  methods: {
+    ...mapActions([
+      'addToCart',
+      'removeFromCart',
+      'subtractFromCart'
+    ]),
+    goCheckout () {
+      this.$router.push('/order-form')
+    }
+  }
 }
 </script>
 
@@ -55,7 +59,7 @@ export default {
 }
 
 .product {
-  padding: .5rem 0;
+  padding: 0.5rem 0;
   align-items: center;
 }
 
@@ -103,7 +107,7 @@ export default {
 
 .btn-remove {
   flex-shrink: 0;
-  margin: 0 .5rem;
+  margin: 0 0.5rem;
 }
 
 .cart-empty {

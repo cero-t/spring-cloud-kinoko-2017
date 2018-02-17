@@ -15,6 +15,7 @@ import store from './vuex/store'
 import App from './App'
 import ProductCatalog from './components/ProductCatalog'
 import ManageProducts from './components/ManageProducts'
+import OrderForm from './components/OrderForm'
 
 // import some global styles
 import './styles/style.scss'
@@ -24,7 +25,8 @@ Vue.http.options.root = 'http://localhost:9000'
 
 const routes = [
   { path: '/home', alias: '/', component: ProductCatalog },
-  { path: '/manage-products', component: ManageProducts }
+  { path: '/manage-products', component: ManageProducts },
+  { path: '/order-form', component: OrderForm }
 ]
 
 // Create the router instance and pass the `routes` option
