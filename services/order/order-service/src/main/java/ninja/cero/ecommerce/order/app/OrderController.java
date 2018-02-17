@@ -93,6 +93,11 @@ public class OrderController {
 		orderEventRepository.save(orderEvent);
 	}
 
+	@GetMapping("/")
+	public Iterable<OrderInfo> getOrders() {
+		return orderRepository.findAll();
+	}
+
 	@GetMapping("/events")
 	public Iterable<OrderEvent> getEvents() {
 		return orderEventRepository.findAll();
