@@ -20,7 +20,7 @@ import ManageProducts from './components/ManageProducts'
 import './styles/style.scss'
 
 // set the API root so we can use relative url's in our actions.
-Vue.http.options.root = 'http://localhost:8080'
+Vue.http.options.root = 'http://localhost:9000'
 
 const routes = [
   { path: '/home', alias: '/', component: ProductCatalog },
