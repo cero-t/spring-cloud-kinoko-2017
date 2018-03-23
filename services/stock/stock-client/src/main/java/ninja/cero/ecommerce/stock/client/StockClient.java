@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import ninja.cero.ecommerce.stock.domain.Stock;
+import reactor.core.publisher.Flux;
 
 public class StockClient {
 	private static final String STOCK_URL = "http://stock-service";
@@ -17,13 +18,13 @@ public class StockClient {
 		this.webClient = webClient;
 	}
 
-	public List<Stock> findAll() {
-		return webClient.get().uri(STOCK_URL).retrieve().bodyToFlux(Stock.class).collectList().block();
+	public Flux<Stock> findAll() {
+		return webClient.get().uri(STOCK_URL).retrieve().bodyToFlux(Stock.class);
 	}
 
-	public List<Stock> findByIds(Collection<Long> ids) {
+	public Flux<Stock> findByIds(Collection<Long> ids) {
 		String idString = ids.stream().map(id -> id.toString()).collect(Collectors.joining(","));
-		return webClient.get().uri(STOCK_URL + "/" + idString).retrieve().bodyToFlux(Stock.class).collectList().block();
+		return webClient.get().uri(STOCK_URL + "/" + idString).retrieve().bodyToFlux(Stock.class);
 	}
 
 	public void keepStock(List<Stock> keeps) {

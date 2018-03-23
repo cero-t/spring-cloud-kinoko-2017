@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -48,15 +49,24 @@ public class CartController {
 	}
 
 	@GetMapping("/{cartId}/detail")
-	public Optional<CartDetail> findCartDetailById(@PathVariable Long cartId) {
-		// Create cart
-		return cartRepository.findById(cartId).map(entity -> {
-			CartDetail cartDetail = new CartDetail();
-			cartDetail.cartId = entity.id;
+	public Optional<CartDetail> findCartDetailById(@PathVariable Long cartId) throws InterruptedException {
+		// TODO: Reactor
 
-			Cart cart = toCart(entity);
-			// Find items in cart and convert to map
-			List<Item> items = itemClient.findByIds(cart.items.keySet());
+		// Create cart
+		CartEntity entity = cartRepository.findById(cartId).get();
+		if (entity == null) {
+			return Optional.empty();
+		}
+
+		CartDetail cartDetail = new CartDetail();
+		cartDetail.cartId = entity.id;
+
+		Cart cart = toCart(entity);
+
+		// Find items in cart and convert to map
+		CountDownLatch latch = new CountDownLatch(1);
+
+		itemClient.findByIds(cart.items.keySet()).collectList().subscribe(items -> {
 			Map<Long, Item> itemMap = items.stream().collect(Collectors.toMap(i -> i.id, i -> i));
 
 			// Resolve cart items
@@ -77,13 +87,13 @@ public class CartController {
 				return cartItem;
 			}).collect(Collectors.toList());
 
-			// Count total
-			cartDetail.total = cartDetail.items.stream()
-					.map(i -> i.unitPrice.multiply(new BigDecimal(i.quantity))).reduce((b1, b2) -> b1.add(b2))
-					.orElse(BigDecimal.ZERO);
-
-			return cartDetail;
+			latch.countDown();
 		});
+
+		latch.await();
+		cartDetail.total = cartDetail.items.stream().map(i -> i.unitPrice.multiply(new BigDecimal(i.quantity)))
+				.reduce((b1, b2) -> b1.add(b2)).orElse(BigDecimal.ZERO);
+		return Optional.of(cartDetail);
 	}
 
 	private Cart toCart(CartEntity entity) {

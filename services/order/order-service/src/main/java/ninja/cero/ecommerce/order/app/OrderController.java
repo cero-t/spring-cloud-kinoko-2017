@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import ninja.cero.ecommerce.cart.client.CartClient;
-import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.order.domain.EventType;
 import ninja.cero.ecommerce.order.domain.OrderEvent;
 import ninja.cero.ecommerce.order.domain.OrderInfo;
@@ -42,7 +41,7 @@ public class OrderController {
 
 	@Autowired
 	PaymentClient paymentClient;
-	
+
 	@Autowired
 	public OrderController(OrderSource orderSource) {
 		System.out.println(orderSource);
@@ -52,40 +51,42 @@ public class OrderController {
 	public void createOrder(@RequestBody OrderInfo order) {
 		orderRepository.save(order);
 
-		CartDetail cart = cartClient.findCartDetailById(order.cartId)
-				.orElseThrow(() -> new RuntimeException("Cart not found"));
+		cartClient.findCartDetailById(order.cartId).subscribe(cart -> {
+			if (cart == null) {
+				throw new RuntimeException("Cart not found");
+			}
 
-		// Keep stock
-		List<Stock> keepRequests = cart.items.stream().map(i -> {
-			Stock stock = new Stock();
-			stock.itemId = i.itemId;
-			stock.quantity = i.quantity;
-			return stock;
-		}).collect(Collectors.toList());
-		stockClient.keepStock(keepRequests);
+			// Keep stock
+			List<Stock> keepRequests = cart.items.stream().map(i -> {
+				Stock stock = new Stock();
+				stock.itemId = i.itemId;
+				stock.quantity = i.quantity;
+				return stock;
+			}).collect(Collectors.toList());
+			stockClient.keepStock(keepRequests);
 
-		// Check card
-		Payment payment = new Payment();
-		payment.name = order.cardName;
-		payment.expire = order.cardExpire;
-		payment.cardNumber = order.cardNumber;
-		payment.amount = cart.total;
-		paymentClient.check(payment);
+			// Check card
+			Payment payment = new Payment();
+			payment.name = order.cardName;
+			payment.expire = order.cardExpire;
+			payment.cardNumber = order.cardNumber;
+			payment.amount = cart.total;
+			paymentClient.check(payment);
 
-		// Start orderEvent
-		OrderEvent event = new OrderEvent();
-		event.orderId = order.id;
-		event.eventType = EventType.START;
-		event.eventTime = new Timestamp(System.currentTimeMillis());
-		orderEventRepository.save(event);
+			// Start orderEvent
+			OrderEvent event = new OrderEvent();
+			event.orderId = order.id;
+			event.eventType = EventType.START;
+			event.eventTime = new Timestamp(System.currentTimeMillis());
+			orderEventRepository.save(event);
 
-		// Order
-		orderSource.order().send(MessageBuilder.withPayload(order).build());
+			// Order
+			orderSource.order().send(MessageBuilder.withPayload(order).build());
 
-		// Payment
+			// Payment
 
-		// SendMail
-
+			// SendMail
+		});
 	}
 
 	@PostMapping("/{orderId}/event")

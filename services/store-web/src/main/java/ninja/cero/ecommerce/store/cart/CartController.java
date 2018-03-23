@@ -1,7 +1,6 @@
 package ninja.cero.ecommerce.store.cart;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +17,7 @@ import ninja.cero.ecommerce.cart.domain.Cart;
 import ninja.cero.ecommerce.cart.domain.CartDetail;
 import ninja.cero.ecommerce.cart.domain.CartEvent;
 import ninja.cero.ecommerce.stock.client.StockClient;
-import ninja.cero.ecommerce.stock.domain.Stock;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/cart")
@@ -31,31 +30,33 @@ public class CartController {
 	StockClient stockClient;
 
 	@PostMapping
-	public Cart createCart() {
+	public Mono<Cart> createCart() {
 		return cartClient.createCart();
 	}
 
 	@GetMapping("/{cartId}")
-	public CartDetail findCart(@PathVariable String cartId) {
-		return cartClient.findCartDetailById(cartId).get();
+	public Mono<CartDetail> findCart(@PathVariable String cartId) {
+		return cartClient.findCartDetailById(cartId);
 	}
 
 	@PostMapping("/{cartId}")
-	public CartDetail addEvent(@PathVariable String cartId, @RequestBody CartEvent cartEvent) {
-		cartClient.findCartById(cartId).orElseThrow(() -> new RuntimeException("Cart not found")); 
+	public Mono<CartDetail> addEvent(@PathVariable String cartId, @RequestBody CartEvent cartEvent) {
+		return cartClient.findCartById(cartId).switchIfEmpty(Mono.error(new RuntimeException("No valid cart")))
+				.flatMap(cart -> {
+					return stockClient.findByIds(Arrays.asList(cartEvent.itemId)).collectList().flatMap(stocks -> {
+						if (stocks.size() == 0 || stocks.get(0).quantity < cartEvent.quantity) {
+							throw new RuntimeException("Not enough stock!");
+						}
 
-		List<Stock> stocks = stockClient.findByIds(Arrays.asList(cartEvent.itemId));
-		if (stocks.size() == 0 || stocks.get(0).quantity < cartEvent.quantity) {
-			throw new RuntimeException("Not enough stock!");
-		}
-
-		cartClient.addItem(cartId, cartEvent);
-		return cartClient.findCartDetailById(cartId).get();
+						return cartClient.addItem(cartId, cartEvent)
+								.flatMap(x -> cartClient.findCartDetailById(cartId));
+					});
+				});
 	}
 
 	@DeleteMapping("/{cartId}/{itemId}")
-	public CartDetail removeItem(@PathVariable String cartId, @PathVariable Long itemId) {
+	public Mono<CartDetail> removeItem(@PathVariable String cartId, @PathVariable Long itemId) {
 		cartClient.removeItem(cartId, itemId);
-		return cartClient.findCartDetailById(cartId).get();
+		return cartClient.findCartDetailById(cartId);
 	}
 }
