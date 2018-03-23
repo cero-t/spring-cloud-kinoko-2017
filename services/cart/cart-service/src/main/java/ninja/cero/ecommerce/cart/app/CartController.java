@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -26,6 +25,7 @@ import ninja.cero.ecommerce.cart.domain.CartEvent;
 import ninja.cero.ecommerce.cart.domain.CartItem;
 import ninja.cero.ecommerce.item.client.ItemClient;
 import ninja.cero.ecommerce.item.domain.Item;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class CartController {
@@ -49,24 +49,16 @@ public class CartController {
 	}
 
 	@GetMapping("/{cartId}/detail")
-	public Optional<CartDetail> findCartDetailById(@PathVariable Long cartId) throws InterruptedException {
-		// TODO: Reactor
-
+	public Mono<CartDetail> findCartDetailById(@PathVariable Long cartId) throws InterruptedException {
 		// Create cart
 		CartEntity entity = cartRepository.findById(cartId).get();
-		if (entity == null) {
-			return Optional.empty();
-		}
-
-		CartDetail cartDetail = new CartDetail();
-		cartDetail.cartId = entity.id;
-
 		Cart cart = toCart(entity);
 
 		// Find items in cart and convert to map
-		CountDownLatch latch = new CountDownLatch(1);
+		return itemClient.findByIds(cart.items.keySet()).collectList().map(items -> {
+			CartDetail cartDetail = new CartDetail();
+			cartDetail.cartId = entity.id;
 
-		itemClient.findByIds(cart.items.keySet()).collectList().subscribe(items -> {
 			Map<Long, Item> itemMap = items.stream().collect(Collectors.toMap(i -> i.id, i -> i));
 
 			// Resolve cart items
@@ -87,13 +79,10 @@ public class CartController {
 				return cartItem;
 			}).collect(Collectors.toList());
 
-			latch.countDown();
+			cartDetail.total = cartDetail.items.stream().map(i -> i.unitPrice.multiply(new BigDecimal(i.quantity)))
+					.reduce((b1, b2) -> b1.add(b2)).orElse(BigDecimal.ZERO);
+			return cartDetail;
 		});
-
-		latch.await();
-		cartDetail.total = cartDetail.items.stream().map(i -> i.unitPrice.multiply(new BigDecimal(i.quantity)))
-				.reduce((b1, b2) -> b1.add(b2)).orElse(BigDecimal.ZERO);
-		return Optional.of(cartDetail);
 	}
 
 	private Cart toCart(CartEntity entity) {
@@ -129,29 +118,24 @@ public class CartController {
 	}
 
 	@PostMapping("/{cartId}")
-	public Optional<Cart> addItem(@PathVariable Long cartId, @RequestBody CartEvent cartEvent) {
-		Optional<Cart> cart = cartRepository.findById(cartId).map(this::toCart);
-		cart.orElseThrow(() -> new RuntimeException("Cart not found"));
+	public Mono<Cart> addItem(@PathVariable Long cartId, @RequestBody CartEvent cartEvent) {
+		Cart cart = cartRepository.findById(cartId).map(this::toCart)
+				.orElseThrow(() -> new RuntimeException("Cart not found"));
 
-		cart.ifPresent(c -> {
-			c.items.compute(cartEvent.itemId,
-					(key, old) -> old == null ? cartEvent.quantity : old + cartEvent.quantity);
-			cartRepository.save(toEntity(c));
-		});
+		cart.items.compute(cartEvent.itemId, (key, old) -> old == null ? cartEvent.quantity : old + cartEvent.quantity);
+		cartRepository.save(toEntity(cart));
 
-		return cart;
+		return Mono.just(cart);
 	}
 
 	@DeleteMapping("/{cartId}/items/{itemId}")
-	public Optional<Cart> removeItem(@PathVariable Long cartId, @PathVariable Long itemId) {
-		Optional<Cart> cart = cartRepository.findById(cartId).map(this::toCart);
-		cart.orElseThrow(() -> new RuntimeException("Cart not found"));
+	public Mono<Cart> removeItem(@PathVariable Long cartId, @PathVariable Long itemId) {
+		Cart cart = cartRepository.findById(cartId).map(this::toCart)
+				.orElseThrow(() -> new RuntimeException("Cart not found"));
 
-		cart.ifPresent(c -> {
-			c.items.remove(itemId);
-			cartRepository.save(toEntity(c));
-		});
+		cart.items.remove(itemId);
+		cartRepository.save(toEntity(cart));
 
-		return cart;
+		return Mono.just(cart);
 	}
 }
