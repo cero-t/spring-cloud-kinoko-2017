@@ -41,17 +41,17 @@ public class CartController {
 
 	@PostMapping("/{cartId}")
 	public Mono<CartDetail> addEvent(@PathVariable String cartId, @RequestBody CartEvent cartEvent) {
-		return cartClient.findCartById(cartId).switchIfEmpty(Mono.error(new RuntimeException("No valid cart")))
-				.flatMap(cart -> {
-					return stockClient.findByIds(Arrays.asList(cartEvent.itemId)).collectList().flatMap(stocks -> {
-						if (stocks.size() == 0 || stocks.get(0).quantity < cartEvent.quantity) {
-							throw new RuntimeException("Not enough stock!");
-						}
-
-						return cartClient.addItem(cartId, cartEvent)
-								.flatMap(x -> cartClient.findCartDetailById(cartId));
-					});
-				});
+		return cartClient.findCartById(cartId)
+				.switchIfEmpty(Mono.error(new RuntimeException("No valid cart")))
+				.flatMap(x -> stockClient.findByIds(Arrays.asList(cartEvent.itemId)).next())
+				.switchIfEmpty(Mono.error(new RuntimeException("No stock info!")))
+				.flatMap(stock -> {
+					if (stock.quantity < cartEvent.quantity) {
+						throw new RuntimeException("Not enough stock!");
+					}
+					return cartClient.addItem(cartId, cartEvent);
+				})
+				.flatMap(x -> cartClient.findCartDetailById(cartId));
 	}
 
 	@DeleteMapping("/{cartId}/{itemId}")
