@@ -2,8 +2,6 @@ package ninja.cero.ecommerce.stock.app;
 
 import java.util.List;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +27,6 @@ public class StockController {
 	}
 
 	@PostMapping
-	@Transactional
 	public void keepStock(@RequestBody List<Stock> keeps) {
 		keeps.stream().forEach(s -> {
 			int count = stockRepository.subtractIfPossible(s.itemId, s.quantity);
