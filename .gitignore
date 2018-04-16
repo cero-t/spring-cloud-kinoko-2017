@@ -1,4 +1,9 @@
-.*
+.DS_store
+
+.project
+.classpath
+.settings
+.springBeans
 target
 
 # Compiled class file
