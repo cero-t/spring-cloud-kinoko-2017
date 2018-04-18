@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import ninja.cero.ecommerce.stock.domain.Stock;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class StockClient {
 	private static final String STOCK_URL = "http://stock-service";
@@ -27,7 +28,7 @@ public class StockClient {
 		return webClient.get().uri(STOCK_URL + "/" + idString).retrieve().bodyToFlux(Stock.class);
 	}
 
-	public void keepStock(List<Stock> keeps) {
-		webClient.post().uri(STOCK_URL).syncBody(keeps).exchange().block();
+	public Mono<Void> keepStock(List<Stock> keeps) {
+		return webClient.post().uri(STOCK_URL).syncBody(keeps).retrieve().bodyToMono(Void.class);
 	}
 }
