@@ -2,6 +2,7 @@ package ninja.cero.ecommerce.order.app;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,8 @@ public class OrderController {
 		orderRepository.save(order);
 
 		cartClient.findCartDetailById(order.cartId).subscribe(cart -> {
+			CountDownLatch latch = new CountDownLatch(2);
+
 			if (cart == null) {
 				throw new RuntimeException("Cart not found");
 			}
@@ -63,7 +66,7 @@ public class OrderController {
 				stock.quantity = i.quantity;
 				return stock;
 			}).collect(Collectors.toList());
-			stockClient.keepStock(keepRequests);
+			stockClient.keepStock(keepRequests).subscribe(v -> latch.countDown());
 
 			// Check card
 			Payment payment = new Payment();
@@ -71,7 +74,7 @@ public class OrderController {
 			payment.expire = order.cardExpire;
 			payment.cardNumber = order.cardNumber;
 			payment.amount = cart.total;
-			paymentClient.check(payment);
+			paymentClient.check(payment).subscribe(v -> latch.countDown());
 
 			// Start orderEvent
 			OrderEvent event = new OrderEvent();
@@ -86,6 +89,13 @@ public class OrderController {
 			// Payment
 
 			// SendMail
+
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		});
 	}
 
@@ -102,6 +112,5 @@ public class OrderController {
 	@GetMapping("/events")
 	public Iterable<OrderEvent> getEvents() {
 		return orderEventRepository.findAll();
-
 	}
 }
